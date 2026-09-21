@@ -24,7 +24,7 @@ new #[Title('Vehicle')] class extends Component
 
     public function mount(Vehicle $vehicle): void
     {
-        abort_unless($vehicle->status === 'available', 404);
+        abort_unless($vehicle->status === 'available' && $vehicle->is_visible, 404);
 
         $this->vehicle = $vehicle->load(['brand', 'vehicleModel', 'images']);
     }

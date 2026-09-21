@@ -37,6 +37,7 @@ new #[Layout('layouts::admin')] #[Title('Inquiries')] class extends Component
                     <th>{{ __('inquiry.name') }}</th>
                     <th>{{ __('admin.vehicle') }}</th>
                     <th>{{ __('inquiry.email') }}</th>
+                    <th>{{ __('inquiry.message') }}</th>
                     <th>{{ __('admin.status') }}</th>
                     <th>{{ __('admin.received') }}</th>
                     <th></th>
@@ -51,9 +52,15 @@ new #[Layout('layouts::admin')] #[Title('Inquiries')] class extends Component
                             <div>{{ $inquiry->email ?? '—' }}</div>
                             <div class="text-sm text-base-content/60">{{ $inquiry->phone ?? '—' }}</div>
                         </td>
+                        <td class="max-w-xs">
+                            <p class="line-clamp-2 text-sm">{{ $inquiry->message ?: __('admin.no_message') }}</p>
+                        </td>
                         <td>{{ __('status.'.$inquiry->status) }}</td>
                         <td>{{ $inquiry->created_at->format('Y-m-d H:i') }}</td>
                         <td class="text-right">
+                            <button type="button" class="btn btn-ghost btn-xs" wire:click="$dispatch('inquiry-open', { id: {{ $inquiry->id }} })">
+                                {{ __('admin.view_message') }}
+                            </button>
                             @if ($inquiry->isNew())
                                 <button type="button" class="btn btn-ghost btn-xs" wire:click="markRead({{ $inquiry->id }})">
                                     {{ __('admin.mark_read') }}
@@ -63,7 +70,7 @@ new #[Layout('layouts::admin')] #[Title('Inquiries')] class extends Component
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="6" class="p-6 text-base-content/60">{{ __('admin.empty') }}</td>
+                        <td colspan="7" class="p-6 text-base-content/60">{{ __('admin.empty') }}</td>
                     </tr>
                 @endforelse
             </tbody>

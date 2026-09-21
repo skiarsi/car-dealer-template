@@ -75,6 +75,7 @@
 
     <x-theme-toggle class="hidden" />
     <livewire:cookie-banner />
+    <livewire:admin.inquiry-modal />
     <x-toast />
 </body>
 </html>

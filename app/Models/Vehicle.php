@@ -33,6 +33,8 @@ class Vehicle extends Model
         'description_es',
         'status',
         'featured',
+        'is_visible',
+        'is_pinned',
         'vin',
     ];
 
@@ -54,6 +56,8 @@ class Vehicle extends Model
             'seats' => 'integer',
             'doors' => 'integer',
             'featured' => 'boolean',
+            'is_visible' => 'boolean',
+            'is_pinned' => 'boolean',
         ];
     }
 
@@ -117,12 +121,17 @@ class Vehicle extends Model
 
     public function scopeAvailable(Builder $query): Builder
     {
-        return $query->where('status', 'available');
+        return $query->where('status', 'available')->where('is_visible', true);
     }
 
     public function scopeFeatured(Builder $query): Builder
     {
         return $query->where('featured', true);
+    }
+
+    public function scopePinnedFirst(Builder $query): Builder
+    {
+        return $query->orderByDesc('is_pinned')->orderByDesc('year')->orderBy('price');
     }
 
     public function scopeSearch(Builder $query, array $filters): Builder

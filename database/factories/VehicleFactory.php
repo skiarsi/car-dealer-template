@@ -32,6 +32,8 @@ class VehicleFactory extends Factory
             'description_es' => fake()->sentence(12),
             'status' => 'available',
             'featured' => false,
+            'is_visible' => true,
+            'is_pinned' => false,
             'vin' => strtoupper(fake()->unique()->bothify('??##############')),
         ];
     }

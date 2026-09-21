@@ -54,6 +54,10 @@ new #[Layout('layouts::admin')] #[Title('Vehicle')] class extends Component
 
     public bool $featured = false;
 
+    public bool $is_visible = true;
+
+    public bool $is_pinned = false;
+
     public string $vin = '';
 
     public string $draft = '';
@@ -87,6 +91,8 @@ new #[Layout('layouts::admin')] #[Title('Vehicle')] class extends Component
         $this->description_es = (string) $vehicle->description_es;
         $this->status = $vehicle->status;
         $this->featured = $vehicle->featured;
+        $this->is_visible = $vehicle->is_visible;
+        $this->is_pinned = $vehicle->is_pinned;
         $this->vin = (string) $vehicle->vin;
     }
 
@@ -158,6 +164,8 @@ new #[Layout('layouts::admin')] #[Title('Vehicle')] class extends Component
             'description_es' => ['nullable', 'string', 'max:5000'],
             'status' => ['required', Rule::in(['available', 'reserved', 'sold'])],
             'featured' => ['boolean'],
+            'is_visible' => ['boolean'],
+            'is_pinned' => ['boolean'],
             'vin' => ['nullable', 'string', 'max:32'],
             'pendingPaths' => ['array', 'max:8'],
             'pendingPaths.*' => ['string'],
@@ -183,6 +191,8 @@ new #[Layout('layouts::admin')] #[Title('Vehicle')] class extends Component
             'description_es' => $this->description_es ?: null,
             'status' => $this->status,
             'featured' => $this->featured,
+            'is_visible' => $this->is_visible,
+            'is_pinned' => $this->is_pinned,
             'vin' => $this->vin ?: null,
         ];
 
@@ -305,7 +315,12 @@ new #[Layout('layouts::admin')] #[Title('Vehicle')] class extends Component
 
 <div class="space-y-6">
     <div class="flex items-center justify-between gap-3">
-        <h1 class="text-2xl font-semibold">{{ $vehicleId ? __('admin.edit_vehicle') : __('admin.add_vehicle') }}</h1>
+        <div>
+            <h1 class="text-2xl font-semibold">{{ $vehicleId ? __('admin.edit_vehicle') : __('admin.add_vehicle') }}</h1>
+            @if ($vehicleId)
+                <x-admin.vehicle-flags class="mt-2" :featured="$featured" :pinned="$is_pinned" :visible="$is_visible" />
+            @endif
+        </div>
         <a href="{{ route('admin.vehicles') }}" wire:navigate class="btn btn-ghost btn-sm">{{ __('admin.back') }}</a>
     </div>
 
@@ -419,10 +434,20 @@ new #[Layout('layouts::admin')] #[Title('Vehicle')] class extends Component
                     <input type="text" wire:model="vin" class="input input-bordered w-full">
                 </label>
             </div>
-            <label class="mt-4 flex items-center gap-2">
-                <input type="checkbox" wire:model="featured" class="checkbox checkbox-sm">
-                <span>{{ __('admin.featured') }}</span>
-            </label>
+            <div class="mt-4 space-y-2">
+                <label class="flex items-center gap-2">
+                    <input type="checkbox" wire:model.live="is_visible" class="checkbox checkbox-sm">
+                    <span>{{ __('admin.show_on_website') }}</span>
+                </label>
+                <label class="flex items-center gap-2">
+                    <input type="checkbox" wire:model.live="is_pinned" class="checkbox checkbox-sm">
+                    <span>{{ __('admin.pinned') }}</span>
+                </label>
+                <label class="flex items-center gap-2">
+                    <input type="checkbox" wire:model.live="featured" class="checkbox checkbox-sm">
+                    <span>{{ __('admin.featured') }} — {{ __('home.featured') }}</span>
+                </label>
+            </div>
             <div class="mt-4 grid gap-4 sm:grid-cols-2">
                 <label class="form-control">
                     <span class="mb-1 text-sm">{{ __('admin.description_en') }}</span>

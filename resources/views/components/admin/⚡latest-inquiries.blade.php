@@ -24,7 +24,7 @@ new class extends Component
         <a href="{{ route('admin.inquiries') }}" wire:navigate class="text-sm text-primary">{{ __('admin.view_all') }}</a>
     </div>
     @forelse ($latest as $inquiry)
-        <article class="rounded-xl border border-base-content/10 bg-base-100 p-4">
+        <article class="cursor-pointer rounded-xl border border-base-content/10 bg-base-100 p-4" wire:click="$dispatch('inquiry-open', { id: {{ $inquiry->id }} })">
             <div class="flex items-start justify-between gap-3">
                 <p class="font-medium">{{ $inquiry->name }}</p>
                 @if ($inquiry->isNew())
@@ -33,6 +33,9 @@ new class extends Component
             </div>
             <p class="text-sm text-base-content/60">{{ $inquiry->vehicle?->title() }}</p>
             <p class="mt-1 text-sm">{{ $inquiry->email ?? $inquiry->phone }}</p>
+            @if ($inquiry->message)
+                <p class="mt-2 line-clamp-2 text-sm text-base-content/80">{{ $inquiry->message }}</p>
+            @endif
         </article>
     @empty
         <p class="text-base-content/60">{{ __('admin.empty') }}</p>

@@ -32,7 +32,7 @@ new #[Title('Home')] class extends Component
                 ->available()
                 ->featured()
                 ->with(['brand', 'vehicleModel', 'images'])
-                ->latest('year')
+                ->pinnedFirst()
                 ->take(3)
                 ->get(),
         ];

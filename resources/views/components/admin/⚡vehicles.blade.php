@@ -23,6 +23,7 @@ new #[Layout('layouts::admin')] #[Title('Vehicles')] class extends Component
         return [
             'vehicles' => Vehicle::query()
                 ->with(['brand', 'vehicleModel', 'images'])
+                ->orderByDesc('is_pinned')
                 ->latest()
                 ->paginate(12),
         ];
@@ -45,12 +46,13 @@ new #[Layout('layouts::admin')] #[Title('Vehicles')] class extends Component
                     <th>{{ __('vehicle.year') }}</th>
                     <th>{{ __('vehicle.price') }}</th>
                     <th>{{ __('admin.status') }}</th>
+                    <th>{{ __('admin.flags') }}</th>
                     <th></th>
                 </tr>
             </thead>
             <tbody>
                 @forelse ($vehicles as $vehicle)
-                    <tr>
+                    <tr @class(['opacity-60' => ! $vehicle->is_visible])>
                         <td class="w-16">
                             @if ($vehicle->coverUrl())
                                 <img src="{{ $vehicle->coverUrl() }}" alt="" class="h-12 w-16 rounded object-cover">
@@ -65,6 +67,9 @@ new #[Layout('layouts::admin')] #[Title('Vehicles')] class extends Component
                         <td>{{ $vehicle->year }}</td>
                         <td>{{ $vehicle->formattedPrice() }}</td>
                         <td>{{ __('listing.'.$vehicle->status) }}</td>
+                        <td>
+                            <x-admin.vehicle-flags :vehicle="$vehicle" />
+                        </td>
                         <td class="text-right">
                             <a href="{{ route('admin.vehicles.edit', $vehicle) }}" wire:navigate class="btn btn-ghost btn-xs">{{ __('admin.edit') }}</a>
                             <button type="button" class="btn btn-ghost btn-xs text-error" wire:click="delete({{ $vehicle->id }})" wire:confirm="{{ __('admin.confirm_delete') }}">
@@ -74,7 +79,7 @@ new #[Layout('layouts::admin')] #[Title('Vehicles')] class extends Component
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="6" class="p-6 text-base-content/60">{{ __('admin.no_vehicles') }}</td>
+                        <td colspan="7" class="p-6 text-base-content/60">{{ __('admin.no_vehicles') }}</td>
                     </tr>
                 @endforelse
             </tbody>

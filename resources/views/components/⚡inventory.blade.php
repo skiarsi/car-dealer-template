@@ -97,8 +97,7 @@ new #[Title('Inventory')] class extends Component
             ->available()
             ->with(['brand', 'vehicleModel', 'images'])
             ->search($filters)
-            ->orderByDesc('year')
-            ->orderBy('price')
+            ->pinnedFirst()
             ->paginate(9);
 
         $models = $this->brand_id

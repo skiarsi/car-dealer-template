@@ -66,6 +66,7 @@ class DealershipSiteTest extends TestCase
             ->set('name', 'Alex Rivera')
             ->set('email', 'alex@example.com')
             ->set('phone', '555-0101')
+            ->set('message', 'Need details')
             ->call('submit')
             ->assertHasNoErrors();
 
@@ -73,6 +74,7 @@ class DealershipSiteTest extends TestCase
             'vehicle_id' => $vehicle->id,
             'name' => 'Alex Rivera',
             'email' => 'alex@example.com',
+            'message' => 'Need details',
             'status' => 'new',
         ]);
     }
@@ -112,6 +114,45 @@ class DealershipSiteTest extends TestCase
             ->assertSee('1');
 
         $this->assertTrue($inquiry->isNew());
+    }
+
+    public function test_admin_can_open_an_inquiry_message_in_a_modal(): void
+    {
+        $user = User::factory()->create();
+        $inquiry = Inquiry::factory()->create([
+            'name' => 'Chris Park',
+            'message' => 'Can I see this car on Saturday?',
+        ]);
+
+        $this->actingAs($user);
+
+        Livewire::test('admin.inquiry-modal')
+            ->dispatch('inquiry-open', id: $inquiry->id)
+            ->assertSet('open', true)
+            ->assertSee('Can I see this car on Saturday?');
+
+        $this->assertSame('read', $inquiry->fresh()->status);
+    }
+
+    public function test_hidden_vehicles_are_not_listed_publicly(): void
+    {
+        $hidden = Vehicle::factory()->create(['is_visible' => false, 'year' => 2011]);
+        $visible = Vehicle::factory()->create(['is_visible' => true, 'year' => 2024]);
+
+        Livewire::test('inventory')
+            ->assertSee($visible->slug)
+            ->assertDontSee($hidden->slug);
+
+        $this->get(route('vehicles.show', $hidden))->assertNotFound();
+        $this->get(route('vehicles.show', $visible))->assertOk();
+    }
+
+    public function test_pinned_vehicles_appear_first_in_inventory(): void
+    {
+        $later = Vehicle::factory()->create(['year' => 2025, 'price' => 10000, 'is_pinned' => false]);
+        $pinned = Vehicle::factory()->create(['year' => 2018, 'price' => 50000, 'is_pinned' => true]);
+
+        Livewire::test('inventory')->assertSeeInOrder([$pinned->slug, $later->slug]);
     }
 
     public function test_legal_pages_and_cookie_banner_are_available(): void

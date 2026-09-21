@@ -52,6 +52,19 @@ class AdminPanelTest extends TestCase
         $this->assertEquals('21950.00', (string) $vehicle->fresh()->price);
     }
 
+    public function test_admin_vehicle_list_marks_featured_pinned_and_hidden(): void
+    {
+        $user = User::factory()->create();
+        Vehicle::factory()->create(['featured' => true, 'is_pinned' => true, 'is_visible' => false]);
+
+        $this->actingAs($user);
+
+        Livewire::test('admin.vehicles')
+            ->assertSee(__('admin.featured_badge'))
+            ->assertSee(__('admin.pinned_badge'))
+            ->assertSee(__('admin.hidden'));
+    }
+
     public function test_admin_can_upload_vehicle_photos_sequentially(): void
     {
         Storage::fake('public');
