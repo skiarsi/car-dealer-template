@@ -43,7 +43,8 @@ new #[Title('Home')] class extends Component
 <div class="space-y-12">
     <section class="max-w-2xl space-y-4">
         <p class="text-sm uppercase tracking-[0.2em] text-base-content/50">{{ __('home.kicker') }}</p>
-        <h1 class="text-4xl font-semibold tracking-tight sm:text-5xl">
+        <h1 class="flex items-center gap-3 text-4xl font-semibold tracking-tight sm:text-5xl">
+            <x-dealership-mark :dealership="$dealership" size="lg" />
             {{ $dealership->name ?? config('app.name') }}
         </h1>
         <p class="text-lg text-base-content/70">

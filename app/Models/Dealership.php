@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Support\LocalizesAttributes;
 use App\Support\OpeningHours;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 
 class Dealership extends Model
 {
@@ -12,6 +13,7 @@ class Dealership extends Model
 
     protected $fillable = [
         'name',
+        'logo',
         'tagline',
         'tagline_es',
         'about',
@@ -49,5 +51,14 @@ class Dealership extends Model
     public function weeklyHours(): array
     {
         return OpeningHours::normalize($this->opening_hours);
+    }
+
+    public function logoUrl(): ?string
+    {
+        if (! $this->logo) {
+            return null;
+        }
+
+        return Storage::disk('public')->url($this->logo).'?v='.($this->updated_at?->timestamp ?? time());
     }
 }

@@ -5,13 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ isset($title) ? $title.' — '.($dealership->name ?? config('app.name')) : ($dealership->name ?? config('app.name')) }}</title>
+    @if($dealership?->logoUrl())
+        <link rel="icon" href="{{ $dealership->logoUrl() }}" type="image/png">
+        <link rel="apple-touch-icon" href="{{ $dealership->logoUrl() }}">
+    @endif
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="min-h-screen bg-base-200 font-sans antialiased">
     @php($dealership = $dealership ?? \App\Models\Dealership::current())
     <x-nav sticky class="lg:hidden">
         <x-slot:brand>
-            <span class="font-semibold">{{ $dealership->name ?? config('app.name') }}</span>
+            <span class="flex items-center gap-2 font-semibold">
+                <x-dealership-mark :dealership="$dealership" size="sm" />
+                {{ $dealership->name ?? config('app.name') }}
+            </span>
         </x-slot:brand>
         <x-slot:actions>
             <livewire:language-switcher />
@@ -24,11 +31,16 @@
 
     <x-main>
         <x-slot:sidebar drawer="main-drawer" collapsible class="bg-base-100 lg:bg-inherit">
-            <a href="{{ route('dashboard') }}" wire:navigate class="hidden-when-collapsed px-5 pt-5 text-lg font-semibold">
+            <a href="{{ route('dashboard') }}" wire:navigate class="hidden-when-collapsed flex items-center gap-2 px-5 pt-5 text-lg font-semibold">
+                <x-dealership-mark :dealership="$dealership" size="sm" />
                 {{ $dealership->name ?? config('app.name') }}
             </a>
             <div class="display-when-collapsed mt-5 hidden px-5">
-                <x-icon name="o-building-storefront" class="h-6 w-6" />
+                @if($dealership?->logoUrl())
+                    <x-dealership-mark :dealership="$dealership" size="sm" />
+                @else
+                    <x-icon name="o-building-storefront" class="h-6 w-6" />
+                @endif
             </div>
 
             <x-menu activate-by-route class="mt-4">

@@ -2,6 +2,7 @@
 
 use App\Models\Dealership;
 use App\Support\OpeningHours;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -84,10 +85,24 @@ new #[Layout('layouts::admin')] #[Title('Dealership')] class extends Component
         $this->success(__('admin.hours_saved'));
     }
 
+    public function removeLogo(): void
+    {
+        $dealership = Dealership::current();
+
+        if (! $dealership?->logo) {
+            return;
+        }
+
+        Storage::disk('public')->delete($dealership->logo);
+        $dealership->update(['logo' => null]);
+        $this->success(__('admin.icon_removed'));
+    }
+
     public function with(): array
     {
         return [
             'days' => OpeningHours::DAYS,
+            'dealership' => Dealership::current(),
         ];
     }
 };
@@ -108,6 +123,61 @@ new #[Layout('layouts::admin')] #[Title('Dealership')] class extends Component
                     <input type="text" wire:model="name" class="input input-bordered w-full" required>
                     @error('name') <span class="mt-1 text-sm text-error">{{ $message }}</span> @enderror
                 </label>
+                <div class="form-control sm:col-span-2">
+                    <span class="mb-1 text-sm">{{ __('admin.icon') }}</span>
+                    <p class="mb-3 text-sm text-base-content/60">{{ __('admin.icon_hint') }}</p>
+                    @if ($dealership?->logoUrl())
+                        <div class="mb-3 flex items-center gap-3">
+                            <img src="{{ $dealership->logoUrl() }}" alt="" class="h-16 w-16 rounded-xl border border-base-content/10 bg-base-200 object-contain p-1">
+                            <button type="button" class="btn btn-ghost btn-sm" wire:click="removeLogo">{{ __('admin.delete') }}</button>
+                        </div>
+                    @endif
+                    <div
+                        x-data="{
+                            busy: false,
+                            error: '',
+                            endpoint: @js(route('admin.logo.store')),
+                            failed: @js(__('admin.icon_failed')),
+                            async queue(event) {
+                                const input = event.target
+                                const file = input.files?.[0]
+                                input.value = ''
+                                if (! file) {
+                                    return
+                                }
+                                this.error = ''
+                                this.busy = true
+                                try {
+                                    const form = new FormData()
+                                    form.append('icon', file)
+                                    const response = await fetch(this.endpoint, {
+                                        method: 'POST',
+                                        headers: {
+                                            'Accept': 'application/json',
+                                            'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content,
+                                            'X-Requested-With': 'XMLHttpRequest',
+                                        },
+                                        credentials: 'same-origin',
+                                        body: form,
+                                    })
+                                    const data = await response.json().catch(() => ({}))
+                                    if (! response.ok) {
+                                        this.error = (data.errors && data.errors.icon && data.errors.icon[0]) || data.message || this.failed
+                                    } else {
+                                        await $wire.$refresh()
+                                    }
+                                } catch (error) {
+                                    this.error = this.failed
+                                }
+                                this.busy = false
+                            }
+                        }"
+                    >
+                        <input type="file" class="file-input file-input-bordered w-full max-w-md" accept="image/jpeg,image/png,image/webp,image/gif" x-on:change="queue($event)">
+                        <div x-show="busy" x-cloak class="mt-2 text-sm text-base-content/60">{{ __('admin.uploading') }}</div>
+                        <p x-show="error" x-text="error" class="mt-2 text-sm text-error"></p>
+                    </div>
+                </div>
                 <label class="form-control">
                     <span class="mb-1 text-sm">{{ __('admin.tagline_en') }}</span>
                     <input type="text" wire:model="tagline" class="input input-bordered w-full">

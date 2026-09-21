@@ -8,7 +8,7 @@ use Illuminate\Support\Str;
 
 class ImageResizer
 {
-    public static function store(UploadedFile $file, string $directory, int $maxWidth = 800): string
+    public static function store(UploadedFile $file, string $directory, int $maxWidth = 800, string $format = 'jpeg'): string
     {
         $realpath = self::realpath($file);
         $contents = $realpath !== null ? @file_get_contents($realpath) : false;
@@ -25,21 +25,43 @@ class ImageResizer
         if ($width > $maxWidth) {
             $newWidth = $maxWidth;
             $newHeight = (int) max(1, round($height * ($maxWidth / $width)));
-            $canvas = imagecreatetruecolor($newWidth, $newHeight);
+            $canvas = self::canvas($newWidth, $newHeight, $format === 'png');
             imagecopyresampled($canvas, $source, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
             imagedestroy($source);
             $source = $canvas;
         }
 
         ob_start();
-        imagejpeg($source, null, 82);
+        if ($format === 'png') {
+            imagesavealpha($source, true);
+            imagepng($source, null, 6);
+            $extension = 'png';
+        } else {
+            imagejpeg($source, null, 82);
+            $extension = 'jpg';
+        }
         $blob = ob_get_clean();
         imagedestroy($source);
 
-        $path = trim($directory, '/').'/'.Str::uuid().'.jpg';
+        $path = trim($directory, '/').'/'.Str::uuid().'.'.$extension;
         Storage::disk('public')->put($path, $blob);
 
         return $path;
+    }
+
+    private static function canvas(int $width, int $height, bool $transparent): \GdImage
+    {
+        $canvas = imagecreatetruecolor($width, $height);
+
+        if ($transparent) {
+            imagealphablending($canvas, false);
+            imagesavealpha($canvas, true);
+            $clear = imagecolorallocatealpha($canvas, 0, 0, 0, 127);
+            imagefilledrectangle($canvas, 0, 0, $width, $height, $clear);
+            imagealphablending($canvas, true);
+        }
+
+        return $canvas;
     }
 
     private static function realpath(UploadedFile $file): ?string

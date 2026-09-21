@@ -127,6 +127,26 @@ class AdminPanelTest extends TestCase
         $this->assertSame('Tampa', $dealership->city);
     }
 
+    public function test_admin_can_upload_a_dealership_icon_shown_in_the_title(): void
+    {
+        Storage::fake('public');
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $this->post(route('admin.logo.store'), [
+            'icon' => UploadedFile::fake()->image('mark.png', 400, 400),
+        ])->assertOk();
+
+        $dealership = Dealership::current();
+        $this->assertNotEmpty($dealership->logo);
+        Storage::disk('public')->assertExists($dealership->logo);
+
+        $this->get(route('home'))
+            ->assertOk()
+            ->assertSee('rel="icon"', false)
+            ->assertSee($dealership->logo, false);
+    }
+
     public function test_contact_page_lists_weekday_hours(): void
     {
         $this->get(route('contact'))

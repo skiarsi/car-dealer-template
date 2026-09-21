@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ isset($title) ? $title.' — '.($dealership->name ?? config('app.name')) : ($dealership->name ?? config('app.name')) }}</title>
+    @if($dealership?->logoUrl())
+        <link rel="icon" href="{{ $dealership->logoUrl() }}" type="image/png">
+        <link rel="apple-touch-icon" href="{{ $dealership->logoUrl() }}">
+    @endif
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="min-h-screen bg-base-200 text-base-content antialiased">
@@ -14,11 +18,14 @@
     @endphp
     <x-nav sticky class="border-base-content/10">
         <x-slot:brand>
-            <a href="{{ route('home') }}" wire:navigate class="flex flex-col">
-                <span class="text-lg font-semibold tracking-tight">{{ $dealership->name ?? config('app.name') }}</span>
-                @if($dealership?->localized('tagline'))
-                    <span class="hidden text-xs text-base-content/60 sm:block">{{ $dealership->localized('tagline') }}</span>
-                @endif
+            <a href="{{ route('home') }}" wire:navigate class="flex items-center gap-2">
+                <x-dealership-mark :dealership="$dealership" size="sm" />
+                <span class="flex flex-col">
+                    <span class="text-lg font-semibold tracking-tight">{{ $dealership->name ?? config('app.name') }}</span>
+                    @if($dealership?->localized('tagline'))
+                        <span class="hidden text-xs text-base-content/60 sm:block">{{ $dealership->localized('tagline') }}</span>
+                    @endif
+                </span>
             </a>
         </x-slot:brand>
         <x-slot:actions>

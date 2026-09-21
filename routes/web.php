@@ -36,6 +36,7 @@ Route::middleware('auth')->group(function () {
     Route::livewire('/dashboard/vehicles', 'admin.vehicles')->name('admin.vehicles');
     Route::livewire('/dashboard/vehicles/create', 'admin.vehicle-form')->name('admin.vehicles.create');
     Route::post('/dashboard/photos', \App\Http\Controllers\Admin\VehiclePhotoUploadController::class)->name('admin.photos.store');
+    Route::post('/dashboard/logo', \App\Http\Controllers\Admin\DealershipLogoController::class)->name('admin.logo.store');
     Route::livewire('/dashboard/vehicles/{vehicle}/edit', 'admin.vehicle-form')->name('admin.vehicles.edit');
     Route::livewire('/dashboard/hours', 'admin.hours')->name('admin.hours');
     Route::livewire('/dashboard/links', 'admin.external-links')->name('admin.links');
