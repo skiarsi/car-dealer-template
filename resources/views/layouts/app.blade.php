@@ -8,7 +8,10 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="min-h-screen bg-base-200 text-base-content antialiased">
-    @php($dealership = $dealership ?? \App\Models\Dealership::current())
+    @php
+        $dealership = $dealership ?? \App\Models\Dealership::current();
+        $externalLinks = $externalLinks ?? \App\Models\ExternalLink::query()->visible()->get();
+    @endphp
     <x-nav sticky class="border-base-content/10">
         <x-slot:brand>
             <a href="{{ route('home') }}" wire:navigate class="flex flex-col">
@@ -46,6 +49,7 @@
     <footer class="border-t border-base-content/10 bg-base-100">
         <div class="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-8 text-sm text-base-content/70 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
             <p>{{ $dealership->name ?? config('app.name') }}</p>
+            <x-social-links :links="$externalLinks ?? collect()" />
             <div class="flex flex-wrap gap-x-4 gap-y-1">
                 <a href="{{ route('legal.privacy') }}" wire:navigate class="hover:text-primary">{{ __('legal.privacy') }}</a>
                 <a href="{{ route('legal.cookies') }}" wire:navigate class="hover:text-primary">{{ __('legal.cookies') }}</a>

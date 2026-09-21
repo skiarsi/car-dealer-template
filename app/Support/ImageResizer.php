@@ -10,14 +10,15 @@ class ImageResizer
 {
     public static function store(UploadedFile $file, string $directory, int $maxWidth = 800): string
     {
-        $contents = @file_get_contents($file->getRealPath());
+        $realpath = self::realpath($file);
+        $contents = $realpath !== null ? @file_get_contents($realpath) : false;
         $source = $contents ? @imagecreatefromstring($contents) : false;
 
         if ($source === false) {
             return $file->store($directory, 'public');
         }
 
-        $source = self::orient($source, $file->getRealPath());
+        $source = $realpath !== null ? self::orient($source, $realpath) : $source;
         $width = imagesx($source);
         $height = imagesy($source);
 
@@ -39,6 +40,13 @@ class ImageResizer
         Storage::disk('public')->put($path, $blob);
 
         return $path;
+    }
+
+    private static function realpath(UploadedFile $file): ?string
+    {
+        $path = $file->getRealPath() ?: $file->getPathname();
+
+        return is_string($path) && $path !== '' && is_readable($path) ? $path : null;
     }
 
     private static function orient(\GdImage $image, string $path): \GdImage

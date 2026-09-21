@@ -7,9 +7,19 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 use Mary\Traits\Toast;
 
-new #[Layout('layouts::admin')] #[Title('Hours')] class extends Component
+new #[Layout('layouts::admin')] #[Title('Dealership')] class extends Component
 {
     use Toast;
+
+    public string $name = '';
+
+    public string $tagline = '';
+
+    public string $tagline_es = '';
+
+    public string $about = '';
+
+    public string $about_es = '';
 
     public array $schedule = [];
 
@@ -24,6 +34,11 @@ new #[Layout('layouts::admin')] #[Title('Hours')] class extends Component
     public function mount(): void
     {
         $dealership = Dealership::current() ?? new Dealership;
+        $this->name = (string) $dealership->name;
+        $this->tagline = (string) $dealership->tagline;
+        $this->tagline_es = (string) $dealership->tagline_es;
+        $this->about = (string) $dealership->about;
+        $this->about_es = (string) $dealership->about_es;
         $this->schedule = OpeningHours::normalize($dealership->opening_hours);
         $this->phone = (string) $dealership->phone;
         $this->email = (string) $dealership->email;
@@ -36,6 +51,11 @@ new #[Layout('layouts::admin')] #[Title('Hours')] class extends Component
         $this->schedule = OpeningHours::normalize($this->schedule);
 
         $this->validate([
+            'name' => ['required', 'string', 'max:120'],
+            'tagline' => ['nullable', 'string', 'max:180'],
+            'tagline_es' => ['nullable', 'string', 'max:180'],
+            'about' => ['nullable', 'string', 'max:5000'],
+            'about_es' => ['nullable', 'string', 'max:5000'],
             'phone' => ['nullable', 'string', 'max:40'],
             'email' => ['nullable', 'email', 'max:160'],
             'address' => ['nullable', 'string', 'max:160'],
@@ -46,17 +66,20 @@ new #[Layout('layouts::admin')] #[Title('Hours')] class extends Component
             'schedule.*.close' => ['required', 'date_format:H:i'],
         ]);
 
-        $dealership = Dealership::current() ?? Dealership::query()->create([
-            'name' => config('app.name'),
-        ]);
+        $dealership = Dealership::current() ?? new Dealership;
 
-        $dealership->update([
+        $dealership->fill([
+            'name' => $this->name,
+            'tagline' => $this->tagline ?: null,
+            'tagline_es' => $this->tagline_es ?: null,
+            'about' => $this->about ?: null,
+            'about_es' => $this->about_es ?: null,
             'phone' => $this->phone ?: null,
             'email' => $this->email ?: null,
             'address' => $this->address ?: null,
             'city' => $this->city ?: null,
             'opening_hours' => OpeningHours::normalize($this->schedule),
-        ]);
+        ])->save();
 
         $this->success(__('admin.hours_saved'));
     }
@@ -71,9 +94,39 @@ new #[Layout('layouts::admin')] #[Title('Hours')] class extends Component
 ?>
 
 <div class="space-y-6">
-    <h1 class="text-2xl font-semibold">{{ __('admin.hours') }}</h1>
+    <div>
+        <h1 class="text-2xl font-semibold">{{ __('admin.hours') }}</h1>
+        <p class="mt-1 text-sm text-base-content/60">{{ __('admin.manage_hours') }}</p>
+    </div>
 
     <form wire:submit="save" class="space-y-6">
+        <section class="rounded-2xl border border-base-content/10 bg-base-100 p-5">
+            <h2 class="mb-4 text-lg font-semibold">{{ __('admin.company') }}</h2>
+            <div class="grid gap-4 sm:grid-cols-2">
+                <label class="form-control sm:col-span-2">
+                    <span class="mb-1 text-sm">{{ __('admin.company_name') }}</span>
+                    <input type="text" wire:model="name" class="input input-bordered w-full" required>
+                    @error('name') <span class="mt-1 text-sm text-error">{{ $message }}</span> @enderror
+                </label>
+                <label class="form-control">
+                    <span class="mb-1 text-sm">{{ __('admin.tagline_en') }}</span>
+                    <input type="text" wire:model="tagline" class="input input-bordered w-full">
+                </label>
+                <label class="form-control">
+                    <span class="mb-1 text-sm">{{ __('admin.tagline_es') }}</span>
+                    <input type="text" wire:model="tagline_es" class="input input-bordered w-full">
+                </label>
+                <label class="form-control">
+                    <span class="mb-1 text-sm">{{ __('admin.about_en') }}</span>
+                    <textarea wire:model="about" class="textarea textarea-bordered w-full" rows="4"></textarea>
+                </label>
+                <label class="form-control">
+                    <span class="mb-1 text-sm">{{ __('admin.about_es') }}</span>
+                    <textarea wire:model="about_es" class="textarea textarea-bordered w-full" rows="4"></textarea>
+                </label>
+            </div>
+        </section>
+
         <section class="rounded-2xl border border-base-content/10 bg-base-100 p-5">
             <h2 class="mb-4 text-lg font-semibold">{{ __('contact.address') }}</h2>
             <div class="grid gap-4 sm:grid-cols-2">

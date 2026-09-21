@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Brand;
 use App\Models\Dealership;
+use App\Models\ExternalLink;
 use App\Models\Inquiry;
 use App\Models\User;
 use App\Models\Vehicle;
@@ -34,6 +35,28 @@ class DatabaseSeeder extends Seeder
             'address' => '1840 Brickell Avenue',
             'city' => 'Miami, FL',
             'opening_hours' => \App\Support\OpeningHours::defaults(),
+        ]);
+
+        ExternalLink::query()->create([
+            'label' => 'Instagram',
+            'url' => 'https://instagram.com/apexmotors',
+            'platform' => 'instagram',
+            'sort_order' => 1,
+            'is_visible' => true,
+        ]);
+        ExternalLink::query()->create([
+            'label' => 'Facebook',
+            'url' => 'https://facebook.com/apexmotors',
+            'platform' => 'facebook',
+            'sort_order' => 2,
+            'is_visible' => true,
+        ]);
+        ExternalLink::query()->create([
+            'label' => 'Google Maps',
+            'url' => 'https://maps.google.com/?q=Apex+Motors+Miami',
+            'platform' => 'google',
+            'sort_order' => 3,
+            'is_visible' => true,
         ]);
 
         $catalog = [

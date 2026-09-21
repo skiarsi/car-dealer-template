@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Dealership;
+use App\Models\ExternalLink;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
@@ -10,6 +11,7 @@ new #[Title('Contact')] class extends Component
     {
         return [
             'dealership' => Dealership::current(),
+            'links' => ExternalLink::query()->visible()->get(),
         ];
     }
 };
@@ -49,5 +51,6 @@ new #[Title('Contact')] class extends Component
                 </dd>
             </div>
         </dl>
+        <x-social-links :links="$links" class="rounded-2xl border border-base-content/10 bg-base-100 p-5" />
     @endif
 </div>

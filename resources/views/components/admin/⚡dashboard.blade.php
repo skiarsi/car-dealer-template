@@ -29,7 +29,7 @@ new #[Layout('layouts::admin')] #[Title('Dashboard')] class extends Component
         <x-stat :title="__('admin.featured')" :value="(string) $featuredCount" icon="o-star" />
     </div>
 
-    <section class="grid gap-3 sm:grid-cols-2">
+    <section class="grid gap-3 sm:grid-cols-3">
         <a href="{{ route('admin.vehicles') }}" wire:navigate class="rounded-xl border border-base-content/10 bg-base-100 p-4 hover:border-primary">
             <p class="font-medium">{{ __('admin.vehicles') }}</p>
             <p class="text-sm text-base-content/60">{{ __('admin.manage_vehicles') }}</p>
@@ -37,6 +37,10 @@ new #[Layout('layouts::admin')] #[Title('Dashboard')] class extends Component
         <a href="{{ route('admin.hours') }}" wire:navigate class="rounded-xl border border-base-content/10 bg-base-100 p-4 hover:border-primary">
             <p class="font-medium">{{ __('admin.hours') }}</p>
             <p class="text-sm text-base-content/60">{{ __('admin.manage_hours') }}</p>
+        </a>
+        <a href="{{ route('admin.links') }}" wire:navigate class="rounded-xl border border-base-content/10 bg-base-100 p-4 hover:border-primary">
+            <p class="font-medium">{{ __('admin.links') }}</p>
+            <p class="text-sm text-base-content/60">{{ __('admin.manage_links') }}</p>
         </a>
     </section>
 

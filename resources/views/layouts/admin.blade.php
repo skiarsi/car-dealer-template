@@ -35,6 +35,7 @@
                 <x-menu-item :title="__('admin.overview')" icon="o-home" :link="route('dashboard')" />
                 <x-menu-item :title="__('admin.vehicles')" icon="o-truck" :link="route('admin.vehicles')" />
                 <x-menu-item :title="__('admin.hours')" icon="o-clock" :link="route('admin.hours')" />
+                <x-menu-item :title="__('admin.links')" icon="o-share" :link="route('admin.links')" />
                 <livewire:admin.inquiry-nav />
                 <x-menu-item :title="__('nav.inventory')" icon="o-globe-alt" :link="route('inventory')" />
                 <x-menu-separator />

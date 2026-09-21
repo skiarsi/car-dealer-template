@@ -52,7 +52,7 @@ class AdminPanelTest extends TestCase
         $this->assertEquals('21950.00', (string) $vehicle->fresh()->price);
     }
 
-    public function test_admin_can_attach_a_vehicle_photo(): void
+    public function test_admin_can_upload_vehicle_photos_sequentially(): void
     {
         Storage::fake('public');
         $user = User::factory()->create();
@@ -60,26 +60,53 @@ class AdminPanelTest extends TestCase
 
         $this->actingAs($user);
 
+        $draft = '11111111-1111-1111-1111-111111111111';
+
+        $first = $this->post(route('admin.photos.store'), [
+            'photo' => UploadedFile::fake()->image('one.jpg', 1200, 400),
+            'draft' => $draft,
+        ]);
+        $second = $this->post(route('admin.photos.store'), [
+            'photo' => UploadedFile::fake()->image('two.png', 900, 600),
+            'draft' => $draft,
+        ]);
+        $third = $this->post(route('admin.photos.store'), [
+            'photo' => UploadedFile::fake()->image('three.jpg', 800, 500),
+            'draft' => $draft,
+        ]);
+
+        $first->assertOk();
+        $second->assertOk();
+        $third->assertOk();
+
         Livewire::test('admin.vehicle-form', ['vehicle' => $vehicle])
-            ->set('photos', [UploadedFile::fake()->image('car.jpg', 1200, 400)])
+            ->set('draft', $draft)
+            ->call('addPendingPath', $first->json('path'))
+            ->call('addPendingPath', $second->json('path'))
+            ->call('addPendingPath', $third->json('path'))
             ->call('save')
             ->assertHasNoErrors();
 
-        $path = $vehicle->fresh()->images()->first()->path;
-        $this->assertDatabaseCount('vehicle_images', 1);
-        Storage::disk('public')->assertExists($path);
-
-        $info = getimagesizefromstring(Storage::disk('public')->get($path));
-        $this->assertLessThanOrEqual(800, $info[0]);
-        $this->assertSame('image/jpeg', $info['mime']);
+        $this->assertDatabaseCount('vehicle_images', 3);
+        $vehicle->fresh()->images->each(function ($image): void {
+            Storage::disk('public')->assertExists($image->path);
+            $info = getimagesizefromstring(Storage::disk('public')->get($image->path));
+            $this->assertLessThanOrEqual(800, $info[0]);
+            $this->assertSame('image/jpeg', $info['mime']);
+        });
     }
 
-    public function test_admin_can_save_weekly_hours(): void
+    public function test_admin_can_save_dealership_profile_and_hours(): void
     {
         $user = User::factory()->create();
         $this->actingAs($user);
 
         Livewire::test('admin.hours')
+            ->set('name', 'Rivera Autos')
+            ->set('tagline', 'Honest cars')
+            ->set('tagline_es', 'Autos honestos')
+            ->set('about', 'Family owned')
+            ->set('about_es', 'Empresa familiar')
             ->set('schedule.sunday.closed', true)
             ->set('schedule.monday.open', '08:30')
             ->set('schedule.monday.close', '17:00')
@@ -87,12 +114,17 @@ class AdminPanelTest extends TestCase
             ->call('save')
             ->assertHasNoErrors();
 
-        $hours = Dealership::current()->weeklyHours();
+        $dealership = Dealership::current();
+        $hours = $dealership->weeklyHours();
 
+        $this->assertSame('Rivera Autos', $dealership->name);
+        $this->assertSame('Honest cars', $dealership->tagline);
+        $this->assertSame('Autos honestos', $dealership->tagline_es);
+        $this->assertSame('Family owned', $dealership->about);
         $this->assertTrue($hours['sunday']['closed']);
         $this->assertSame('08:30', $hours['monday']['open']);
         $this->assertSame('17:00', $hours['monday']['close']);
-        $this->assertSame('Tampa', Dealership::current()->city);
+        $this->assertSame('Tampa', $dealership->city);
     }
 
     public function test_contact_page_lists_weekday_hours(): void
@@ -101,5 +133,29 @@ class AdminPanelTest extends TestCase
             ->assertOk()
             ->assertSee('Monday')
             ->assertSee('Closed');
+    }
+
+    public function test_admin_can_save_an_external_link_shown_on_the_site(): void
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        Livewire::test('admin.external-links')
+            ->set('label', 'Instagram')
+            ->set('url', 'https://instagram.com/apexmotors')
+            ->set('platform', 'instagram')
+            ->set('sort_order', '1')
+            ->set('is_visible', true)
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertDatabaseHas('external_links', [
+            'label' => 'Instagram',
+            'platform' => 'instagram',
+            'is_visible' => true,
+        ]);
+
+        $this->get(route('home'))->assertOk()->assertSee('Instagram');
+        $this->get(route('contact'))->assertOk()->assertSee('Instagram');
     }
 }

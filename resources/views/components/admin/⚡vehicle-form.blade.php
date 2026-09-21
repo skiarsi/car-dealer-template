@@ -4,20 +4,17 @@ use App\Models\Brand;
 use App\Models\Vehicle;
 use App\Models\VehicleImage;
 use App\Models\VehicleModel;
-use App\Support\ImageResizer;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
-use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
-use Livewire\WithFileUploads;
 use Mary\Traits\Toast;
 
 new #[Layout('layouts::admin')] #[Title('Vehicle')] class extends Component
 {
-    use Toast, WithFileUploads;
+    use Toast;
 
     public ?int $vehicleId = null;
 
@@ -59,11 +56,14 @@ new #[Layout('layouts::admin')] #[Title('Vehicle')] class extends Component
 
     public string $vin = '';
 
-    /** @var array<int, TemporaryUploadedFile> */
-    public array $photos = [];
+    public string $draft = '';
+
+    /** @var array<int, string> */
+    public array $pendingPaths = [];
 
     public function mount(?Vehicle $vehicle = null): void
     {
+        $this->draft = (string) Str::uuid();
         if (! $vehicle?->exists) {
             $this->year = (string) now()->year;
 
@@ -93,6 +93,37 @@ new #[Layout('layouts::admin')] #[Title('Vehicle')] class extends Component
     public function updatedBrandId(): void
     {
         $this->vehicle_model_id = '';
+    }
+
+    public function addPendingPath(string $path): void
+    {
+        $prefix = 'vehicles/pending/'.$this->draft.'/';
+
+        if (! str_starts_with($path, $prefix) || ! Storage::disk('public')->exists($path)) {
+            return;
+        }
+
+        if (in_array($path, $this->pendingPaths, true)) {
+            return;
+        }
+
+        if (count($this->pendingPaths) >= 8) {
+            return;
+        }
+
+        $this->pendingPaths[] = $path;
+    }
+
+    public function removePendingPhoto(int $index): void
+    {
+        $path = $this->pendingPaths[$index] ?? null;
+
+        if ($path) {
+            Storage::disk('public')->delete($path);
+        }
+
+        unset($this->pendingPaths[$index]);
+        $this->pendingPaths = array_values($this->pendingPaths);
     }
 
     public function removePhoto(int $id): void
@@ -128,8 +159,8 @@ new #[Layout('layouts::admin')] #[Title('Vehicle')] class extends Component
             'status' => ['required', Rule::in(['available', 'reserved', 'sold'])],
             'featured' => ['boolean'],
             'vin' => ['nullable', 'string', 'max:32'],
-            'photos' => ['array', 'max:8'],
-            'photos.*' => ['image', 'max:2048', 'mimes:jpg,jpeg,png,webp'],
+            'pendingPaths' => ['array', 'max:8'],
+            'pendingPaths.*' => ['string'],
         ]);
 
         $brand = $this->resolveBrand();
@@ -165,7 +196,7 @@ new #[Layout('layouts::admin')] #[Title('Vehicle')] class extends Component
         $this->vehicleId = $vehicle->id;
 
         $this->storePhotos($vehicle);
-        $this->photos = [];
+        $this->pendingPaths = [];
 
         $this->success(__('admin.vehicle_saved'));
 
@@ -253,15 +284,17 @@ new #[Layout('layouts::admin')] #[Title('Vehicle')] class extends Component
     {
         $existing = $vehicle->images()->count();
         $order = $existing;
+        $prefix = 'vehicles/pending/'.$this->draft.'/';
 
-        foreach ($this->photos as $photo) {
-            if ($existing >= 8) {
-                break;
+        foreach ($this->pendingPaths as $path) {
+            if ($existing >= 8 || ! str_starts_with($path, $prefix) || ! Storage::disk('public')->exists($path)) {
+                continue;
             }
 
-            $path = ImageResizer::store($photo, 'vehicles/'.$vehicle->id);
+            $destination = 'vehicles/'.$vehicle->id.'/'.basename($path);
+            Storage::disk('public')->move($path, $destination);
             $vehicle->images()->create([
-                'path' => $path,
+                'path' => $destination,
                 'sort_order' => $order++,
             ]);
             $existing++;
@@ -419,9 +452,91 @@ new #[Layout('layouts::admin')] #[Title('Vehicle')] class extends Component
                 </div>
             @endif
 
-            <input type="file" wire:model="photos" class="file-input file-input-bordered w-full max-w-md" accept="image/jpeg,image/png,image/webp" multiple>
-            <div wire:loading wire:target="photos" class="mt-2 text-sm text-base-content/60">{{ __('admin.uploading') }}</div>
-            @error('photos.*') <p class="mt-2 text-sm text-error">{{ $message }}</p> @enderror
+            @if (count($pendingPaths) > 0)
+                <p class="mb-3 text-sm text-base-content/60">{{ count($pendingPaths) }} / 8</p>
+                <div class="mb-4 flex flex-wrap gap-3">
+                    @foreach ($pendingPaths as $index => $pendingPath)
+                        <figure class="relative overflow-hidden rounded-xl bg-base-200">
+                            <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($pendingPath) }}" alt="" class="h-20 w-28 object-cover">
+                            <button type="button" class="btn btn-xs btn-ghost absolute right-1 top-1" wire:click="removePendingPhoto({{ $index }})">×</button>
+                        </figure>
+                    @endforeach
+                </div>
+            @endif
+
+            <div
+                x-data="{
+                    busy: false,
+                    error: '',
+                    endpoint: @js(route('admin.photos.store')),
+                    failed: @js(__('admin.photo_failed')),
+                    async toJpeg(file) {
+                        try {
+                            const bitmap = await createImageBitmap(file)
+                            const scale = Math.min(1, 800 / bitmap.width)
+                            const canvas = document.createElement('canvas')
+                            canvas.width = Math.max(1, Math.round(bitmap.width * scale))
+                            canvas.height = Math.max(1, Math.round(bitmap.height * scale))
+                            canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height)
+                            bitmap.close()
+                            const blob = await new Promise((resolve, reject) => {
+                                canvas.toBlob((result) => result ? resolve(result) : reject(), 'image/jpeg', 0.82)
+                            })
+                            return new File([blob], file.name.replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg' })
+                        } catch (error) {
+                            return file
+                        }
+                    },
+                    async queue(event) {
+                        const input = event.target
+                        const files = Array.from(input.files || [])
+                        input.value = ''
+                        this.error = ''
+                        this.busy = true
+                        const token = document.querySelector('meta[name=csrf-token]')?.content
+                        for (const file of files) {
+                            if (($wire.pendingPaths || []).length >= 8) {
+                                break
+                            }
+                            try {
+                                const jpeg = await this.toJpeg(file)
+                                const form = new FormData()
+                                form.append('photo', jpeg)
+                                form.append('draft', $wire.draft)
+                                const response = await fetch(this.endpoint, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Accept': 'application/json',
+                                        'X-CSRF-TOKEN': token,
+                                        'X-Requested-With': 'XMLHttpRequest',
+                                    },
+                                    credentials: 'same-origin',
+                                    body: form,
+                                })
+                                const data = await response.json().catch(() => ({}))
+                                if (! response.ok || ! data.path) {
+                                    this.error = (data.errors && data.errors.photo && data.errors.photo[0]) || data.message || this.failed
+                                    continue
+                                }
+                                await $wire.addPendingPath(data.path)
+                            } catch (error) {
+                                this.error = this.failed
+                            }
+                        }
+                        this.busy = false
+                    }
+                }"
+            >
+                <input
+                    type="file"
+                    class="file-input file-input-bordered w-full max-w-md"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    multiple
+                    x-on:change="queue($event)"
+                >
+                <div x-show="busy" x-cloak class="mt-2 text-sm text-base-content/60">{{ __('admin.uploading') }}</div>
+                <p x-show="error" x-text="error" class="mt-2 text-sm text-error"></p>
+            </div>
         </section>
 
         <button type="submit" class="btn btn-primary">{{ __('admin.save') }}</button>
