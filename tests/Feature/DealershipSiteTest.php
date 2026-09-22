@@ -53,6 +53,32 @@ class DealershipSiteTest extends TestCase
             ->assertSee(__('search.filters'));
     }
 
+    public function test_inventory_filters_year_and_price_with_range_sliders(): void
+    {
+        $oldCheap = Vehicle::factory()->create(['year' => 2015, 'price' => 8000]);
+        $newExpensive = Vehicle::factory()->create(['year' => 2024, 'price' => 45000]);
+
+        $this->get(route('inventory'))
+            ->assertOk()
+            ->assertSee('dual-range', false)
+            ->assertSee(__('search.year'))
+            ->assertSee(__('search.price'));
+
+        Livewire::test('inventory')
+            ->call('setYearRange', 2020, 2025)
+            ->assertSet('year_from', '2020')
+            ->assertSet('year_to', '2025')
+            ->assertSee($newExpensive->slug)
+            ->assertDontSee($oldCheap->slug);
+
+        Livewire::test('inventory')
+            ->call('setPriceRange', 5000, 10000)
+            ->assertSet('price_min', '5000')
+            ->assertSet('price_max', '10000')
+            ->assertSee($oldCheap->slug)
+            ->assertDontSee($newExpensive->slug);
+    }
+
     public function test_inquiry_requires_email_or_phone_and_is_stored(): void
     {
         $vehicle = Vehicle::factory()->create();

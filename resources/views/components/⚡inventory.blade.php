@@ -77,6 +77,67 @@ new #[Title('Inventory')] class extends Component
         $this->resetPage();
     }
 
+    public function setYearRange(mixed $from, mixed $to): void
+    {
+        [$this->year_from, $this->year_to] = $this->normalizeRange($from, $to);
+        $this->resetPage();
+    }
+
+    public function setPriceRange(mixed $from, mixed $to): void
+    {
+        [$this->price_min, $this->price_max] = $this->normalizeRange($from, $to);
+        $this->resetPage();
+    }
+
+    /**
+     * @return array{0: string, 1: string}
+     */
+    private function normalizeRange(mixed $from, mixed $to): array
+    {
+        $from = $from === '' || $from === null ? null : (int) $from;
+        $to = $to === '' || $to === null ? null : (int) $to;
+
+        if ($from !== null && $to !== null && $from > $to) {
+            [$from, $to] = [$to, $from];
+        }
+
+        return [
+            $from === null ? '' : (string) $from,
+            $to === null ? '' : (string) $to,
+        ];
+    }
+
+    /**
+     * @return array{yearMin: int, yearMax: int, priceMin: int, priceMax: int}
+     */
+    private function catalogBounds(): array
+    {
+        $bounds = Vehicle::query()
+            ->available()
+            ->selectRaw('MIN(year) as min_year, MAX(year) as max_year, MIN(price) as min_price, MAX(price) as max_price')
+            ->first();
+
+        $yearMin = (int) ($bounds->min_year ?? now()->year - 15);
+        $yearMax = (int) ($bounds->max_year ?? now()->year);
+        $priceMin = (int) (floor(((float) ($bounds->min_price ?? 0)) / 500) * 500);
+        $priceMax = (int) (ceil(((float) ($bounds->max_price ?? 100000)) / 500) * 500);
+
+        if ($yearMax < $yearMin) {
+            $yearMax = $yearMin;
+        }
+
+        if ($priceMax <= $priceMin) {
+            $priceMax = $priceMin + 500;
+        }
+
+        return [
+            'yearMin' => $yearMin,
+            'yearMax' => $yearMax,
+            'priceMin' => $priceMin,
+            'priceMax' => $priceMax,
+        ];
+    }
+
     public function with(): array
     {
         $filters = [
@@ -104,6 +165,8 @@ new #[Title('Inventory')] class extends Component
             ? VehicleModel::query()->where('brand_id', $this->brand_id)->orderBy('name')->get()
             : VehicleModel::query()->orderBy('name')->get();
 
+        $bounds = $this->catalogBounds();
+
         return [
             'brands' => Brand::query()->orderBy('name')->get(),
             'models' => $models,
@@ -112,6 +175,7 @@ new #[Title('Inventory')] class extends Component
             'transmissions' => ['automatic', 'manual'],
             'bodies' => ['sedan', 'suv', 'hatchback', 'truck', 'coupe', 'van'],
             'activeFilterCount' => collect($filters)->filter(fn ($value) => $value !== '' && $value !== null)->count(),
+            ...$bounds,
         ];
     }
 };
@@ -149,6 +213,14 @@ new #[Title('Inventory')] class extends Component
                     :engines="$engines"
                     :transmissions="$transmissions"
                     :bodies="$bodies"
+                    :year-min="$yearMin"
+                    :year-max="$yearMax"
+                    :price-min="$priceMin"
+                    :price-max="$priceMax"
+                    :year-from="$year_from"
+                    :year-to="$year_to"
+                    :price-from="$price_min"
+                    :price-to="$price_max"
                 />
 
                 <label for="inventory-filters-drawer" class="btn btn-primary mt-4 w-full lg:hidden">

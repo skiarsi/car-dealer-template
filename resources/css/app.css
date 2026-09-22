@@ -25,6 +25,68 @@
     @apply bg-primary text-base-100;
 }
 
-.mary-table-pagination button {
-    @apply cursor-pointer;
+.dual-range {
+    position: relative;
+    height: 1.5rem;
+}
+
+.dual-range__track,
+.dual-range__fill {
+    position: absolute;
+    top: 50%;
+    height: 0.35rem;
+    border-radius: 9999px;
+    transform: translateY(-50%);
+}
+
+.dual-range__track {
+    inset-inline: 0;
+    background: color-mix(in oklab, var(--color-base-content) 18%, transparent);
+}
+
+.dual-range__fill {
+    background: var(--color-primary);
+}
+
+.dual-range input[type='range'] {
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    width: 100%;
+    appearance: none;
+    background: transparent;
+}
+
+.dual-range input[type='range']::-webkit-slider-runnable-track {
+    height: 0.35rem;
+    background: transparent;
+}
+
+.dual-range input[type='range']::-moz-range-track {
+    height: 0.35rem;
+    border: 0;
+    background: transparent;
+}
+
+.dual-range input[type='range']::-webkit-slider-thumb {
+    pointer-events: auto;
+    appearance: none;
+    width: 1.05rem;
+    height: 1.05rem;
+    border: 0;
+    border-radius: 9999px;
+    background: var(--color-primary);
+    box-shadow: 0 0 0 3px var(--color-base-100);
+    cursor: grab;
+}
+
+.dual-range input[type='range']::-moz-range-thumb {
+    pointer-events: auto;
+    width: 1.05rem;
+    height: 1.05rem;
+    border: 0;
+    border-radius: 9999px;
+    background: var(--color-primary);
+    cursor: grab;
 }

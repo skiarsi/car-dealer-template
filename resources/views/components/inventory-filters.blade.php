@@ -4,6 +4,14 @@
     'engines',
     'transmissions',
     'bodies',
+    'yearMin',
+    'yearMax',
+    'priceMin',
+    'priceMax',
+    'yearFrom' => '',
+    'yearTo' => '',
+    'priceFrom' => '',
+    'priceTo' => '',
 ])
 
 <div class="space-y-4">
@@ -29,22 +37,28 @@
             @endforeach
         </select>
     </label>
-    <label class="form-control">
-        <span class="mb-1 text-sm">{{ __('search.year_from') }}</span>
-        <input type="number" wire:model.live.debounce.400ms="year_from" class="input input-bordered w-full" min="1990" max="2030">
-    </label>
-    <label class="form-control">
-        <span class="mb-1 text-sm">{{ __('search.year_to') }}</span>
-        <input type="number" wire:model.live.debounce.400ms="year_to" class="input input-bordered w-full" min="1990" max="2030">
-    </label>
-    <label class="form-control">
-        <span class="mb-1 text-sm">{{ __('search.price_min') }}</span>
-        <input type="number" wire:model.live.debounce.400ms="price_min" class="input input-bordered w-full" min="0" step="100">
-    </label>
-    <label class="form-control">
-        <span class="mb-1 text-sm">{{ __('search.price_max') }}</span>
-        <input type="number" wire:model.live.debounce.400ms="price_max" class="input input-bordered w-full" min="0" step="100">
-    </label>
+    <div class="form-control">
+        <span class="mb-2 text-sm">{{ __('search.year') }}</span>
+        <x-dual-range
+            :min="$yearMin"
+            :max="$yearMax"
+            :from="$yearFrom"
+            :to="$yearTo"
+            method="setYearRange"
+        />
+    </div>
+    <div class="form-control">
+        <span class="mb-2 text-sm">{{ __('search.price') }}</span>
+        <x-dual-range
+            :min="$priceMin"
+            :max="$priceMax"
+            :step="500"
+            :from="$priceFrom"
+            :to="$priceTo"
+            method="setPriceRange"
+            format="price"
+        />
+    </div>
     <label class="form-control">
         <span class="mb-1 text-sm">{{ __('search.seats') }}</span>
         <select wire:model.live="seats" class="select select-bordered w-full">
