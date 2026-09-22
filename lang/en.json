@@ -39,6 +39,8 @@
     "search.any": "Any",
     "search.submit": "Search",
     "search.reset": "Clear",
+    "search.filters": "Filters",
+    "search.close_filters": "Close filters",
     "search.results": ":count vehicles",
     "search.empty": "No vehicles match those filters.",
     "inventory.title": "Inventory",

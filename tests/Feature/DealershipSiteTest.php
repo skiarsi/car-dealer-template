@@ -49,7 +49,8 @@ class DealershipSiteTest extends TestCase
 
         Livewire::test('inventory', ['brand_id' => (string) $match->brand_id, 'engine_type' => 'hybrid'])
             ->assertSee($match->vehicleModel->name)
-            ->assertDontSee($other->vehicleModel->name);
+            ->assertDontSee($other->vehicleModel->name)
+            ->assertSee(__('search.filters'));
     }
 
     public function test_inquiry_requires_email_or_phone_and_is_stored(): void

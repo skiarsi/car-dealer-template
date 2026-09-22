@@ -39,6 +39,8 @@
     "search.any": "Cualquiera",
     "search.submit": "Buscar",
     "search.reset": "Limpiar",
+    "search.filters": "Filtros",
+    "search.close_filters": "Cerrar filtros",
     "search.results": ":count vehículos",
     "search.empty": "Ningún vehículo coincide con esos filtros.",
     "inventory.title": "Inventario",

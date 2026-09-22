@@ -55,7 +55,7 @@ new #[Layout('layouts::admin')] #[Title('Vehicles')] class extends Component
                     <tr @class(['opacity-60' => ! $vehicle->is_visible])>
                         <td class="w-16">
                             @if ($vehicle->coverUrl())
-                                <img src="{{ $vehicle->coverUrl() }}" alt="" class="h-12 w-16 rounded object-cover">
+                                <img src="{{ asset($vehicle->coverUrl()) }}" alt="" class="h-12 w-16 rounded object-cover">
                             @else
                                 <div class="flex h-12 w-16 items-center justify-center rounded bg-base-200 text-xs text-base-content/50">—</div>
                             @endif

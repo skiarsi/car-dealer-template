@@ -111,113 +111,78 @@ new #[Title('Inventory')] class extends Component
             'engines' => ['gasoline', 'diesel', 'hybrid', 'electric'],
             'transmissions' => ['automatic', 'manual'],
             'bodies' => ['sedan', 'suv', 'hatchback', 'truck', 'coupe', 'van'],
+            'activeFilterCount' => collect($filters)->filter(fn ($value) => $value !== '' && $value !== null)->count(),
         ];
     }
 };
 ?>
 
-<div class="space-y-8">
+<div class="space-y-6">
     <header class="max-w-2xl space-y-2">
         <h1 class="text-3xl font-semibold tracking-tight">{{ __('inventory.title') }}</h1>
         <p class="text-base-content/70">{{ __('inventory.lead') }}</p>
     </header>
 
-    <form wire:submit.prevent class="rounded-2xl border border-base-content/10 bg-base-100 p-5">
-        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <label class="form-control sm:col-span-2">
-                <span class="mb-1 text-sm">{{ __('search.keyword') }}</span>
-                <input type="text" wire:model.live.debounce.400ms="q" class="input input-bordered w-full" placeholder="{{ __('search.keyword_placeholder') }}">
-            </label>
-            <label class="form-control">
-                <span class="mb-1 text-sm">{{ __('search.brand') }}</span>
-                <select wire:model.live="brand_id" class="select select-bordered w-full">
-                    <option value="">{{ __('search.any') }}</option>
-                    @foreach ($brands as $brand)
-                        <option value="{{ $brand->id }}">{{ $brand->name }}</option>
-                    @endforeach
-                </select>
-            </label>
-            <label class="form-control">
-                <span class="mb-1 text-sm">{{ __('search.model') }}</span>
-                <select wire:model.live="vehicle_model_id" class="select select-bordered w-full">
-                    <option value="">{{ __('search.any') }}</option>
-                    @foreach ($models as $model)
-                        <option value="{{ $model->id }}">{{ $model->name }}</option>
-                    @endforeach
-                </select>
-            </label>
-            <label class="form-control">
-                <span class="mb-1 text-sm">{{ __('search.year_from') }}</span>
-                <input type="number" wire:model.live.debounce.400ms="year_from" class="input input-bordered w-full" min="1990" max="2030">
-            </label>
-            <label class="form-control">
-                <span class="mb-1 text-sm">{{ __('search.year_to') }}</span>
-                <input type="number" wire:model.live.debounce.400ms="year_to" class="input input-bordered w-full" min="1990" max="2030">
-            </label>
-            <label class="form-control">
-                <span class="mb-1 text-sm">{{ __('search.price_min') }}</span>
-                <input type="number" wire:model.live.debounce.400ms="price_min" class="input input-bordered w-full" min="0" step="100">
-            </label>
-            <label class="form-control">
-                <span class="mb-1 text-sm">{{ __('search.price_max') }}</span>
-                <input type="number" wire:model.live.debounce.400ms="price_max" class="input input-bordered w-full" min="0" step="100">
-            </label>
-            <label class="form-control">
-                <span class="mb-1 text-sm">{{ __('search.seats') }}</span>
-                <select wire:model.live="seats" class="select select-bordered w-full">
-                    <option value="">{{ __('search.any') }}</option>
-                    @foreach ([2, 4, 5, 7] as $count)
-                        <option value="{{ $count }}">{{ $count }}+</option>
-                    @endforeach
-                </select>
-            </label>
-            <label class="form-control">
-                <span class="mb-1 text-sm">{{ __('search.engine') }}</span>
-                <select wire:model.live="engine_type" class="select select-bordered w-full">
-                    <option value="">{{ __('search.any') }}</option>
-                    @foreach ($engines as $engine)
-                        <option value="{{ $engine }}">{{ __('engine.'.$engine) }}</option>
-                    @endforeach
-                </select>
-            </label>
-            <label class="form-control">
-                <span class="mb-1 text-sm">{{ __('search.transmission') }}</span>
-                <select wire:model.live="transmission" class="select select-bordered w-full">
-                    <option value="">{{ __('search.any') }}</option>
-                    @foreach ($transmissions as $item)
-                        <option value="{{ $item }}">{{ __('transmission.'.$item) }}</option>
-                    @endforeach
-                </select>
-            </label>
-            <label class="form-control">
-                <span class="mb-1 text-sm">{{ __('search.body') }}</span>
-                <select wire:model.live="body_type" class="select select-bordered w-full">
-                    <option value="">{{ __('search.any') }}</option>
-                    @foreach ($bodies as $body)
-                        <option value="{{ $body }}">{{ __('body.'.$body) }}</option>
-                    @endforeach
-                </select>
-            </label>
-        </div>
-        <div class="mt-4">
-            <button type="button" class="btn btn-ghost btn-sm" wire:click="resetFilters">{{ __('search.reset') }}</button>
-        </div>
-    </form>
+    <div class="relative lg:grid lg:grid-cols-[18rem_minmax(0,1fr)] lg:items-start lg:gap-8">
+        <div class="lg:sticky lg:top-24 lg:max-h-[calc(100vh-8rem)]">
+            <input id="inventory-filters-drawer" type="checkbox" class="peer sr-only" wire:ignore>
 
-    <p class="text-sm text-base-content/60">{{ __('search.results', ['count' => $vehicles->total()]) }}</p>
+            <label
+                for="inventory-filters-drawer"
+                class="fixed inset-0 z-40 hidden bg-base-content/40 peer-checked:block lg:!hidden"
+                aria-label="{{ __('search.close_filters') }}"
+            ></label>
 
-    @if ($vehicles->isEmpty())
-        <p class="rounded-2xl border border-dashed border-base-content/15 p-8 text-center text-base-content/60">
-            {{ __('search.empty') }}
-        </p>
-    @else
-        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            @foreach ($vehicles as $vehicle)
-                <x-vehicle-card :vehicle="$vehicle" />
-            @endforeach
+            <aside
+                class="fixed inset-y-0 left-0 z-50 flex w-[min(20rem,90vw)] -translate-x-full flex-col overflow-y-auto border-r border-base-content/10 bg-base-100 p-5 shadow-xl transition-transform duration-200 peer-checked:translate-x-0 lg:static lg:z-auto lg:h-auto lg:max-h-[calc(100vh-8rem)] lg:w-full lg:translate-x-0 lg:rounded-2xl lg:border lg:p-5 lg:shadow-none"
+            >
+                <div class="mb-4 flex items-center justify-between gap-3 lg:block">
+                    <h2 class="text-lg font-semibold">{{ __('search.filters') }}</h2>
+                    <label for="inventory-filters-drawer" class="btn btn-ghost btn-sm btn-circle lg:hidden" aria-label="{{ __('search.close_filters') }}">
+                        <x-icon name="o-x-mark" class="h-5 w-5" />
+                    </label>
+                </div>
+
+                <x-inventory-filters
+                    :brands="$brands"
+                    :models="$models"
+                    :engines="$engines"
+                    :transmissions="$transmissions"
+                    :bodies="$bodies"
+                />
+
+                <label for="inventory-filters-drawer" class="btn btn-primary mt-4 w-full lg:hidden">
+                    {{ __('search.close_filters') }}
+                </label>
+            </aside>
         </div>
-        <div class="mt-6">
-            {{ $vehicles->links() }}
+
+        <div class="min-w-0 space-y-4">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <p class="text-sm text-base-content/60">{{ __('search.results', ['count' => $vehicles->total()]) }}</p>
+                <label for="inventory-filters-drawer" class="btn btn-outline btn-sm lg:hidden">
+                    <x-icon name="o-funnel" class="h-4 w-4" />
+                    {{ __('search.filters') }}
+                    @if ($activeFilterCount > 0)
+                        <span class="badge badge-primary badge-sm">{{ $activeFilterCount }}</span>
+                    @endif
+                </label>
+            </div>
+
+            @if ($vehicles->isEmpty())
+                <p class="rounded-2xl border border-dashed border-base-content/15 p-8 text-center text-base-content/60">
+                    {{ __('search.empty') }}
+                </p>
+            @else
+                <div class="grid gap-4 sm:grid-cols-2">
+                    @foreach ($vehicles as $vehicle)
+                        <x-vehicle-card :vehicle="$vehicle" />
+                    @endforeach
+                </div>
+                <div class="mt-6">
+                    {{ $vehicles->links() }}
+                </div>
+            @endif
         </div>
-    @endif
+    </div>
 </div>
