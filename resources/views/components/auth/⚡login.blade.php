@@ -43,6 +43,6 @@ new #[Layout('layouts::app')] #[Title('Sign in')] class extends Component
             <span class="mb-1 text-sm">{{ __('auth.password') }}</span>
             <input type="password" wire:model="password" class="input input-bordered w-full" required>
         </label>
-        <button type="submit" class="btn btn-primary w-full">{{ __('auth.submit') }}</button>
+        <button type="submit" class="btn btn-primary w-full mt-5">{{ __('auth.submit') }}</button>
     </form>
 </div>
