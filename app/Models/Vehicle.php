@@ -116,7 +116,7 @@ class Vehicle extends Model
             return null;
         }
 
-        return number_format($this->mileage).' km';
+        return number_format($this->mileage).' Miles';
     }
 
     public function scopeAvailable(Builder $query): Builder

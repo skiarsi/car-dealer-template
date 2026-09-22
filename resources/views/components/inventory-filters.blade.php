@@ -17,7 +17,7 @@
 <div class="space-y-4">
     <label class="form-control">
         <span class="mb-1 text-sm">{{ __('search.keyword') }}</span>
-        <input type="text" wire:model.live.debounce.400ms="q" class="input input-bordered w-full" placeholder="{{ __('search.keyword_placeholder') }}">
+        <input type="text" wire:model.live.debounce.500ms="q" class="input input-bordered w-full" placeholder="{{ __('search.keyword_placeholder') }}">
     </label>
     <label class="form-control">
         <span class="mb-1 text-sm">{{ __('search.brand') }}</span>

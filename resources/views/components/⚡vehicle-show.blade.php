@@ -145,7 +145,7 @@ new #[Title('Vehicle')] class extends Component
                 <span class="mb-1 text-sm">{{ __('inquiry.message') }}</span>
                 <textarea wire:model="message" class="textarea textarea-bordered w-full" rows="3" placeholder="{{ __('inquiry.message_placeholder') }}"></textarea>
             </label>
-            <button type="submit" class="btn btn-primary w-full">{{ __('inquiry.submit') }}</button>
+            <button type="submit" class="btn btn-primary w-full mt-4">{{ __('inquiry.submit') }}</button>
         </form>
     </aside>
 </div>
